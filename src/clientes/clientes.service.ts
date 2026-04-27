@@ -9,32 +9,8 @@ import { Cliente, Prisma } from '../generated/prisma/client';
 export class ClientesService {
   constructor(private readonly prisma: PrismaService) { }
 
-  async cliente(
-    clienteWhereUniqueInput: Prisma.ClienteWhereUniqueInput,
-  ): Promise<Cliente | null> {
-    return this.prisma.cliente.findUnique({
-      where: clienteWhereUniqueInput,
-    });
-  }
-
-  async clientes(params: {
-    skip?: number;
-    take?: number;
-    cursor?: Prisma.ClienteWhereUniqueInput;
-    where?: Prisma.ClienteWhereInput;
-    orderBy?: Prisma.ClienteOrderByWithRelationInput;
-  }): Promise<Cliente[]> {
-    const { skip, take, cursor, where, orderBy } = params;
-    return this.prisma.cliente.findMany({
-      skip,
-      take,
-      cursor,
-      where,
-      orderBy,
-    });
-  }
-
   async createUser(createClienteDto: CreateClienteDto): Promise<Cliente> {
+    console.log('Criando cliente com os seguintes dados:', createClienteDto);
     const cliente = await this.prisma.cliente.findUnique({
       where: {
         email: createClienteDto.email,
@@ -44,6 +20,14 @@ export class ClientesService {
     if (cliente) {
       throw new HttpException('Email já cadastrado', HttpStatus.BAD_REQUEST);
     }
+    const clienteDocumento = await this.prisma.cliente.findUnique({
+      where: {
+        documento: createClienteDto.documento,
+      },
+    });
+    if(clienteDocumento){
+      throw new HttpException('Documento já cadastrado', HttpStatus.BAD_REQUEST);
+    }
 
     const newcliente = await this.prisma.cliente.create({
       data: {
@@ -52,6 +36,7 @@ export class ClientesService {
         documento: createClienteDto.documento,
       },
     });
+    console.log('Cliente criado:', newcliente);
     return newcliente;
   }
 
