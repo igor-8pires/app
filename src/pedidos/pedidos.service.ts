@@ -8,17 +8,26 @@ import { Pedido, Prisma } from '../generated/prisma/client';
 @Injectable()
 export class PedidosService {
   constructor(private readonly prisma: PrismaService) {} 
+
   async create(createPedidoDto: CreatePedidoDto) {
-    const pedido = await this.prisma.pedido.create({
-      data: {
-        dataPedido: createPedidoDto.dataPedido,
-        status: createPedidoDto.status,
-        valorTotal: createPedidoDto.valorTotal,
+    const pedido = await this.prisma.pedido.findFirst({
+      where: { 
+        clienteId: createPedidoDto.clienteId, 
+        dataPedido: createPedidoDto.dataPedido, 
         vendedorId: createPedidoDto.vendedorId,
-        clienteId: createPedidoDto.clienteId,
+        valorTotal: createPedidoDto.valorTotal,
+        status: createPedidoDto.status 
+
       },
     });
-    return pedido;
+
+    if (pedido) {
+      throw new Error('Pedido já cadastrado');
+    }
+
+    return await this.prisma.pedido.create({
+      data: createPedidoDto,
+    });
   }
 
   async findAll() {
@@ -45,8 +54,18 @@ export class PedidosService {
   }
 
   async remove(id: number) {
+    const pedido = await this.prisma.pedido.findUnique({
+      where: { id },
+    });
+
+    if (!pedido) {
+      throw new Error('Pedido não encontrado');
+    }
+
     return await this.prisma.pedido.delete({
       where: { id },
     });
+    return pedido;
   }
+
 }

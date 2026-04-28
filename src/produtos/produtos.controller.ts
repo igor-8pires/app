@@ -9,7 +9,8 @@ export class ProdutosController {
 
   @Post()
   create(@Body() createProdutoDto: CreateProdutoDto) {
-    return this.produtosService.create(createProdutoDto);
+    return console.log('Criando produto com os seguintes dados:', createProdutoDto),
+    this.produtosService.create(createProdutoDto);
   }
 
   @Get()
