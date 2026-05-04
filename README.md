@@ -18,7 +18,7 @@ O preço de venda é calculado dinamicamente no backend seguindo a regra:
 ---
 
 ### Schema Completo
-```DBDL
+```mermaid
 Table Produto {
   id Int [pk, increment]
   nome String [not null]
