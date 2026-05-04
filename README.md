@@ -18,32 +18,116 @@ O preço de venda é calculado dinamicamente no backend seguindo a regra:
 ---
 
 ### Schema Completo
-```mermaid
-flowchart TB
+```DBDL
+Table Produto {
+  id Int [pk, increment]
+  nome String [not null]
+  sku String [unique, not null]
+  precoCusto Float [not null]
+  precoMinimo Float [not null]
+  unidadeMedida String [not null, default: "UN"]
+  ativo Boolean [not null, default: true]
+  atualizadoEm DateTime [not null]
 
-  subgraph PRODUTOS_ESTOQUE
-    Produto --> Estoque
-    Produto --> MovimentacaoEstoque
-    Produto --> PrecoVendedor
-    Produto --> ItemPedido
-  end
+  Indexes {
+    sku [unique]
+  }
+}
 
-  subgraph CLIENTES
-    Cliente --> Pedido
-  end
+Table Estoque {
+  id Int [pk, increment]
+  quantidade Int [not null, default: 0]
+  estoqueMinimo Int [not null, default: 0]
+  produtoId Int [unique, not null]
 
-  subgraph VENDEDORES
-    Vendedor --> Pedido
-    Vendedor --> PrecoVendedor
-  end
+  Indexes {
+    produtoId [unique]
+  }
+}
 
-  subgraph VENDAS
-    Pedido --> ItemPedido
-  end
+Table MovimentacaoEstoque {
+  id Int [pk, increment]
+  tipo String [not null]
+  quantidade Int [not null]
+  motivo String
+  data DateTime [not null, default: "now()"]
+  produtoId Int [not null]
 
-  %% Relações cruzadas
-  Pedido --> Cliente
-  Pedido --> Vendedor
-  ItemPedido --> Produto
-  PrecoVendedor --> Produto
+  Indexes {
+    produtoId
+  }
+}
+
+Table Cliente {
+  id Int [pk, increment]
+  nome String [not null]
+  documento String [unique, not null]
+  email String [unique]
+
+  Indexes {
+    documento [unique]
+    email [unique]
+  }
+}
+
+Table Vendedor {
+  id Int [pk, increment]
+  nome String [not null]
+  email String [unique, not null]
+  ativo Boolean [not null, default: true]
+
+  Indexes {
+    email [unique]
+  }
+}
+
+Table PrecoVendedor {
+  id Int [pk, increment]
+  margemLucro Float [not null]
+  vendedorId Int [not null]
+  produtoId Int [not null]
+
+  Indexes {
+    (vendedorId, produtoId) [unique]
+  }
+}
+
+Table Pedido {
+  id Int [pk, increment]
+  dataPedido DateTime [not null, default: "now()"]
+  status String [not null, default: "PENDENTE"]
+  valorTotal Float [not null, default: 0.0]
+  vendedorId Int [not null]
+  clienteId Int [not null]
+
+  Indexes {
+    vendedorId
+    clienteId
+  }
+}
+
+Table ItemPedido {
+  id Int [pk, increment]
+  quantidade Int [not null]
+  precoCustoNoAto Float [not null]
+  precoMinimoNoAto Float [not null]
+  precoVendaNoAto Float [not null]
+  pedidoId Int [not null]
+  produtoId Int [not null]
+
+  Indexes {
+    pedidoId
+    produtoId
+  }
+}
+
+// Relationships
+Ref: Estoque.produtoId > Produto.id [delete: cascade]
+Ref: MovimentacaoEstoque.produtoId > Produto.id [delete: cascade]
+Ref: PrecoVendedor.vendedorId > Vendedor.id [delete: cascade]
+Ref: PrecoVendedor.produtoId > Produto.id [delete: cascade]
+Ref: Pedido.vendedorId > Vendedor.id
+Ref: Pedido.clienteId > Cliente.id
+Ref: ItemPedido.pedidoId > Pedido.id [delete: cascade]
+Ref: ItemPedido.produtoId > Produto.id
 ```
